@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#00E5FF">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CareSystem">
+<title>Care Management System</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<style>
+:root {
+  --bg:         #07090F;
+  --surface:    #0C1120;
+  --surface2:   #101828;
+  --surface3:   #152035;
+  --cyan:       #00E5FF;
+  --cyan-dim:   rgba(0,229,255,0.10);
+  --cyan-glow:  rgba(0,229,255,0.35);
+  --ink:        #FFFFFF;
+  --ink-soft:   #A8CBEE;
+  --ink-muted:  #5E88AD;
+  --border:     rgba(0,229,255,0.10);
+  --border-hi:  rgba(0,229,255,0.30);
+  --feed:       #FF6D3B;
+  --flush:      #00E5FF;
+  --flush-dim:  rgba(0,229,255,0.07);
+  --flush-edge: rgba(0,229,255,0.25);
+  --med:        #C084FC;
+  --med-dim:    rgba(192,132,252,0.09);
+  --med-edge:   rgba(192,132,252,0.28);
+  --success:    #00E676;
+  --danger:     #FF1744;
+  --warn:       #FFB300;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:16px;line-height:1.5;min-height:100dvh;overflow-x:hidden}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:3px}
+
+#app{display:flex;flex-direction:column;min-height:100dvh;max-width:800px;margin:0 auto;padding:0 16px calc(40px + env(safe-area-inset-bottom, 0px))}
+
+/* ── App Header ── */
+.app-header{padding:calc(var(--safe-top, 0px) + 20px) 0 16px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.app-title{
+  font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.5rem;
+  color:var(--cyan);letter-spacing:.1em;text-align:center;
+  text-shadow:0 0 28px var(--cyan-glow);margin-bottom:10px;
+}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.patient-label{font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--ink-soft);letter-spacing:.08em}
+.hdr-clock{text-align:right;flex-shrink:0}
+#hdr-time{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--ink);letter-spacing:.04em}
+#hdr-date{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--ink-muted);margin-top:1px}
+
+/* ── Next Task Card ── */
+#next-task-card{
+  background:var(--surface);border:1px solid var(--border-hi);
+  border-radius:12px;padding:14px 18px;margin-bottom:16px;
+  display:none;align-items:center;gap:14px;
+  box-shadow:0 0 20px rgba(0,229,255,.08);
+}
+#next-task-card.visible{display:flex}
+.nt-left{flex:1;min-width:0}
+.nt-label{font-family:'Orbitron',sans-serif;font-size:.6rem;color:var(--ink-muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px}
+.nt-name{font-size:.95rem;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nt-detail{font-size:.78rem;color:var(--ink-soft);margin-top:1px}
+.nt-right{text-align:right;flex-shrink:0}
+.nt-time{font-family:'Share Tech Mono',monospace;font-size:.85rem;color:var(--ink-soft)}
+#nt-countdown{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:var(--cyan);text-shadow:0 0 12px var(--cyan-glow);margin-top:2px}
+
+/* ── Warnings ── */
+#setup-warning{background:rgba(255,23,68,.08);border:1px solid rgba(255,23,68,.35);border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:.83rem;color:#ff8a9a;display:none}
+#setup-warning.visible{display:block}
+#setup-warning strong{color:var(--danger);display:block;margin-bottom:3px;font-family:'Orbitron',sans-serif;font-size:.72rem;letter-spacing:.1em}
+
+/* ── Launch button ── */
+#launch-btn{width:100%;padding:18px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.12em;color:var(--bg);background:var(--cyan);border:none;border-radius:10px;cursor:pointer;box-shadow:0 0 32px var(--cyan-glow);transition:opacity .2s,transform .1s;text-transform:uppercase;margin-bottom:14px}
+#launch-btn:hover{opacity:.9}
+#launch-btn:active{transform:scale(.98)}
+#launch-btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+
+/* ── Stop button ── */
+#stop-btn{width:100%;padding:15px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:.12em;color:var(--danger);background:rgba(255,23,68,.07);border:1px solid rgba(255,23,68,.28);border-radius:10px;cursor:pointer;text-transform:uppercase;transition:all .2s;margin-bottom:14px;display:none}
+#stop-btn:hover{background:rgba(255,23,68,.15);border-color:rgba(255,23,68,.55);box-shadow:0 0 20px rgba(255,23,68,.12)}
+#stop-btn:active{transform:scale(.98)}
+#stop-btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ── Deploy from time row ── */
+#deploy-from-row{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+#deploy-time{flex:0 0 130px;padding:10px 12px;background:var(--surface3);border:1px solid var(--border-hi);border-radius:8px;color:var(--ink);font-family:'Share Tech Mono',monospace;font-size:.88rem;margin-bottom:0}
+#deploy-from-btn{flex:1;padding:10px 14px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:.70rem;letter-spacing:.1em;color:var(--ink-soft);background:transparent;border:1px solid var(--border-hi);border-radius:8px;cursor:pointer;text-transform:uppercase;transition:all .2s;white-space:nowrap}
+#deploy-from-btn:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+#deploy-from-btn:active{transform:scale(.98)}
+#deploy-from-btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ── Status bar ── */
+#status-bar{font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--ink-muted);padding:10px 14px;border-radius:8px;background:var(--surface2);min-height:40px;display:flex;align-items:center;gap:8px;margin-bottom:16px;border:1px solid var(--border)}
+#status-bar.success{color:var(--success);border-color:rgba(0,230,118,.25)}
+#status-bar.error{color:var(--danger);border-color:rgba(255,23,68,.25)}
+#status-icon{font-size:1rem;flex-shrink:0}
+
+/* ── Counts ── */
+#counts-row{display:none;gap:10px;margin-bottom:16px}
+#counts-row.visible{display:flex;flex-wrap:wrap}
+.count-chip{flex:1;min-width:90px;padding:10px 12px;border-radius:8px;text-align:center;border:1px solid var(--border);background:var(--surface)}
+.count-chip .num{font-family:'Orbitron',sans-serif;font-size:1.4rem;font-weight:900;display:block}
+.count-chip .lbl{font-size:.7rem;color:var(--ink-muted);letter-spacing:.08em;text-transform:uppercase}
+.count-chip.feed .num{color:var(--feed)}
+.count-chip.flush .num{color:var(--flush)}
+.count-chip.med .num{color:var(--med)}
+
+/* ── Timeline ── */
+#timeline-section{display:none;margin-bottom:20px}
+#timeline-section.visible{display:block}
+.tl-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.tl-title{font-family:'Orbitron',sans-serif;font-size:.78rem;font-weight:700;color:var(--ink-soft);letter-spacing:.12em;text-transform:uppercase}
+.tl-badge{font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--cyan);padding:3px 10px;border:1px solid var(--border-hi);border-radius:20px}
+.timeline{display:flex;flex-direction:column;gap:7px}
+.tl-item{display:flex;gap:12px;align-items:flex-start;padding:11px 13px;border-radius:10px;border-left:3px solid transparent;background:var(--surface2)}
+.tl-item.feed{background:rgba(255,109,59,0.09);border-color:var(--feed)}
+.tl-item.flush{background:var(--flush-dim);border-color:var(--flush)}
+.tl-item.med{background:var(--med-dim);border-color:var(--med)}
+.tl-item.past{opacity:.4}
+.tl-item.preview-item{opacity:.6}
+.tl-time{font-family:'Share Tech Mono',monospace;font-size:.78rem;color:var(--ink-muted);white-space:nowrap;padding-top:2px;min-width:64px}
+.tl-body{flex:1}
+.tl-name{font-weight:600;font-size:.88rem;color:var(--ink)}
+.tl-detail{font-size:.75rem;color:var(--ink-soft);margin-top:1px}
+
+/* ── Settings tabs ── */
+.settings-tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
+.stab{padding:7px 14px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:.78rem;letter-spacing:.08em;border:1px solid var(--border);color:var(--ink-muted);background:transparent;cursor:pointer;white-space:nowrap;transition:all .2s}
+.stab:hover{border-color:var(--border-hi);color:var(--ink-soft)}
+.stab.active{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+.stab-panel{display:none}
+.stab-panel.active{display:block}
+
+/* ── Forms ── */
+.field-row{margin-bottom:14px}
+label{display:block;font-size:.8rem;color:var(--ink-soft);margin-bottom:5px;letter-spacing:.04em}
+input[type=text],input[type=number],input[type=time],select{width:100%;padding:10px 12px;background:var(--surface3);border:1px solid var(--border-hi);border-radius:8px;color:var(--ink);font-family:'Share Tech Mono',monospace;font-size:.88rem;transition:border-color .2s}
+input[type=text]:focus,input[type=number]:focus,input[type=time]:focus,select:focus{outline:none;border-color:var(--cyan)}
+select option{background:var(--surface3)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+.toggle-label{font-size:.85rem;color:var(--ink-soft)}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--surface3);border-radius:12px;border:1px solid var(--border-hi);cursor:pointer;transition:background .2s}
+.toggle input:checked+.toggle-track{background:var(--cyan);border-color:var(--cyan)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:left .2s;pointer-events:none}
+.toggle input:checked~.toggle-thumb{left:23px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hm-row{display:flex;gap:6px;align-items:center}
+.hm-row input{flex:1}
+.hm-unit{color:var(--ink-muted);font-size:.8rem;white-space:nowrap;font-family:'Share Tech Mono',monospace}
+.section-head{font-family:'Orbitron',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.14em;color:var(--cyan);text-transform:uppercase;padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:12px}
+
+/* ── Rule cards ── */
+.rule-card{border-radius:10px;padding:14px;margin-bottom:10px;position:relative}
+.rule-card.med-card{border:1px solid var(--med-edge);background:var(--med-dim)}
+.rule-card.flush-card{border:1px solid var(--flush-edge);background:var(--flush-dim)}
+.rule-card.alert-card{border:1px solid var(--border-hi);background:var(--surface3)}
+.rule-card .card-hd{font-weight:700;font-size:.9rem;margin-bottom:10px;padding-right:28px}
+.rule-card.med-card .card-hd{color:var(--med)}
+.rule-card.flush-card .card-hd{color:var(--cyan)}
+.rule-card.alert-card .card-hd{color:var(--ink-soft);font-size:.82rem}
+.rule-del{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--ink-muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:4px 6px;border-radius:4px}
+.rule-del:hover{color:var(--danger)}
+.mode-row{display:flex;gap:6px;margin-bottom:12px}
+.mode-row .stab{flex:1;padding:6px 8px;font-size:.70rem}
+.hint{font-size:.8rem;color:var(--ink-soft);padding:8px 0;font-style:italic}
+
+/* ── Buttons ── */
+.btn{padding:9px 18px;border-radius:8px;font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.1em;cursor:pointer;border:1px solid transparent;transition:all .2s;text-transform:uppercase}
+.btn-primary{background:var(--cyan);color:var(--bg);border-color:var(--cyan)}
+.btn-primary:hover{box-shadow:0 0 16px var(--cyan-glow)}
+.btn-ghost{background:transparent;color:var(--cyan);border-color:var(--border-hi)}
+.btn-ghost:hover{border-color:var(--cyan);background:var(--cyan-dim)}
+.btn-danger{background:transparent;color:var(--danger);border-color:rgba(255,23,68,.3)}
+.btn-danger:hover{background:rgba(255,23,68,.1)}
+.btn-warn{background:transparent;color:var(--warn);border-color:rgba(255,179,0,.3)}
+.btn-sm{padding:6px 12px;font-size:.7rem}
+.btn-full{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+
+/* ── Settings accordion ── */
+.settings-section{margin-bottom:8px}
+details summary{list-style:none;cursor:pointer;padding:12px 16px;border-radius:10px;background:var(--surface);border:1px solid var(--border);font-family:'Orbitron',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.1em;color:var(--ink-soft);text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;transition:border-color .2s,color .2s;gap:8px}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:'▸';transition:transform .2s;font-size:.7rem;flex-shrink:0}
+details[open] summary::after{transform:rotate(90deg)}
+details[open] summary{border-color:var(--border-hi);color:var(--ink);margin-bottom:2px}
+details>:not(summary){padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;margin-top:-2px}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--ink-muted);flex-shrink:0;margin-left:auto}
+.conn-dot.online{background:var(--success);box-shadow:0 0 6px var(--success)}
+.conn-dot.offline{background:var(--danger)}
+
+/* ── Preview section ── */
+#preview-section{margin-top:4px}
+.preview-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+#preview-updated{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--ink-muted)}
+
+/* ── Wizard ── */
+#wizard-overlay{position:fixed;inset:0;background:rgba(7,9,15,.97);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
+#wizard-overlay.hidden{display:none}
+.wizard-box{background:var(--surface);border:1px solid var(--border-hi);border-radius:16px;width:100%;max-width:540px;max-height:90dvh;overflow-y:auto;padding:32px 28px}
+.wizard-progress{display:flex;gap:6px;margin-bottom:28px}
+.wizard-pip{flex:1;height:4px;background:var(--border-hi);border-radius:2px;transition:background .3s}
+.wizard-pip.done{background:var(--cyan)}
+.wizard-pip.active{background:var(--cyan);opacity:.6}
+.wizard-step{display:none}
+.wizard-step.active{display:block}
+.wizard-title{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--cyan);margin-bottom:6px;letter-spacing:.06em}
+.wizard-sub{font-size:.85rem;color:var(--ink-soft);margin-bottom:20px}
+.wizard-actions{display:flex;justify-content:space-between;margin-top:24px;gap:10px}
+
+/* ── Spinner ── */
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border-hi);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,.012) 2px,rgba(0,229,255,.012) 4px)}
+
+@media(max-width:480px){
+  .app-title{font-size:1.1rem}
+  .wizard-box{padding:24px 18px}
+  #launch-btn{font-size:.9rem;padding:16px}
+  .row2{grid-template-columns:1fr}
+  .mode-row{flex-wrap:wrap}
+  .mode-row .stab{flex:unset;min-width:calc(50% - 3px)}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════ WIZARD ══════════════════════════════ -->
+<div id="wizard-overlay" class="hidden">
+  <div class="wizard-box">
+    <div class="wizard-progress">
+      <div class="wizard-pip active" id="pip-0"></div>
+      <div class="wizard-pip" id="pip-1"></div>
+      <div class="wizard-pip" id="pip-2"></div>
+      <div class="wizard-pip" id="pip-3"></div>
+      <div class="wizard-pip" id="pip-4"></div>
+    </div>
+
+    <!-- Step 0: Welcome -->
+    <div class="wizard-step active" id="ws-0">
+      <div class="wizard-title">SYSTEM INITIALIZATION</div>
+      <div class="wizard-sub">Welcome to the Care Management System. This wizard configures everything for your patient.</div>
+      <div class="field-row"><label>Patient Name</label><input type="text" id="w-name" placeholder="e.g. Alex"></div>
+      <div class="wizard-actions"><span></span><button class="btn btn-primary" onclick="wizNext()">NEXT &rarr;</button></div>
+    </div>
+
+    <!-- Step 1: Feeding -->
+    <div class="wizard-step" id="ws-1">
+      <div class="wizard-title">FEEDING SCHEDULE</div>
+      <div class="wizard-sub">Configure tube feeding parameters.</div>
+      <div class="row2">
+        <div class="field-row"><label>Feedings per Day</label><input type="number" id="w-feedCount" value="6" min="1" max="24"></div>
+        <div class="field-row">
+          <label>Time Between Feeds</label>
+          <div class="hm-row">
+            <input type="number" id="w-feedIntervalH" value="3" min="0" max="23">
+            <span class="hm-unit">hr</span>
+            <input type="number" id="w-feedIntervalM" value="0" min="0" max="59">
+            <span class="hm-unit">min</span>
+          </div>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field-row"><label>Volume (mL)</label><input type="number" id="w-feedVol" value="200" min="0"></div>
+        <div class="field-row"><label>Rate mL/hr (0=bolus)</label><input type="number" id="w-feedRate" value="0" min="0"></div>
+      </div>
+      <div class="field-row"><label>Event Duration (min)</label><input type="number" id="w-dur" value="15" min="5" max="120"></div>
+      <div class="wizard-actions">
+        <button class="btn btn-ghost" onclick="wizPrev()">&larr; BACK</button>
+        <button class="btn btn-primary" onclick="wizNext()">NEXT &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Hydration -->
+    <div class="wizard-step" id="ws-2">
+      <div class="wizard-title">HYDRATION / FLUSHES</div>
+      <div class="wizard-sub">Add as many flush rules as you need. Each fires independently.</div>
+      <div class="toggle-row">
+        <span class="toggle-label">Enable Water Flushes</span>
+        <label class="toggle"><input type="checkbox" id="w-flushEnabled"><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
+      </div>
+      <div id="w-flushes-list"></div>
+      <button class="btn btn-ghost btn-sm" onclick="wizAddFlush()" style="margin-bottom:14px">+ ADD FLUSH</button>
+      <div class="wizard-actions">
+        <button class="btn btn-ghost" onclick="wizPrev()">&larr; BACK</button>
+        <button class="btn btn-primary" onclick="wizNext()">NEXT &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Medications -->
+    <div class="wizard-step" id="ws-3">
+      <div class="wizard-title">MEDICATIONS</div>
+      <div class="wizard-sub">Add recurring medications. You can edit these any time in Settings.</div>
+      <div id="w-meds-list"></div>
+      <button class="btn btn-ghost btn-sm" onclick="wizAddMed()" style="margin-bottom:14px">+ ADD MEDICATION</button>
+      <div class="wizard-actions">
+        <button class="btn btn-ghost" onclick="wizPrev()">&larr; BACK</button>
+        <button class="btn btn-primary" onclick="wizNext()">NEXT &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Calendar -->
+    <div class="wizard-step" id="ws-4">
+      <div class="wizard-title">CONNECTIONS &amp; ALERTS</div>
+      <div class="wizard-sub">Connect Google Calendar and set up notification alerts. You can skip and configure later.</div>
+      <div id="w-auth-status" style="margin-bottom:12px;font-family:'Share Tech Mono',monospace;font-size:.82rem;color:var(--ink-muted)">Not signed in</div>
+      <button class="btn btn-ghost btn-full" onclick="signIn()" id="w-signin-btn" style="margin-bottom:12px">SIGN IN WITH GOOGLE</button>
+      <div id="w-cal-field" class="field-row" style="display:none">
+        <label>Target Calendar</label>
+        <select id="w-calId"><option value="primary">My primary calendar</option></select>
+      </div>
+      <div class="wizard-actions">
+        <button class="btn btn-ghost" onclick="wizPrev()">&larr; BACK</button>
+        <button class="btn btn-primary" onclick="wizFinish()">LAUNCH APP &rarr;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ MAIN APP ══════════════════════════════ -->
+<div id="app">
+
+  <!-- Header -->
+  <div class="app-header">
+    <div class="app-title">CARE MANAGEMENT SYSTEM</div>
+    <div class="hdr-row">
+      <div class="patient-label" id="brand-name">Daily Schedule</div>
+      <div class="hdr-clock">
+        <div id="hdr-time">--:-- --</div>
+        <div id="hdr-date">---</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Next Task Card -->
+  <div id="next-task-card">
+    <div class="nt-left">
+      <div class="nt-label">&#9654; Next Up</div>
+      <div class="nt-name"><span id="nt-emoji"></span> <span id="nt-name">—</span></div>
+      <div class="nt-detail" id="nt-detail"></div>
+    </div>
+    <div class="nt-right">
+      <div class="nt-time" id="nt-time">—</div>
+      <div id="nt-countdown">—</div>
+    </div>
+  </div>
+
+  <!-- Setup warning -->
+  <div id="setup-warning">
+    <strong>&#9888; CONFIGURATION REQUIRED</strong>
+    Open <code>Index.html</code> and replace <code>YOUR_GOOGLE_CLIENT_ID</code>. See SETUP.md.
+  </div>
+
+  <!-- Launch -->
+  <button id="launch-btn" onclick="launchDay()">&#9654; START TODAY'S SCHEDULE</button>
+  <button id="stop-btn" onclick="stopAndClear()">&#9632; STOP &amp; CLEAR SCHEDULE</button>
+
+  <!-- Deploy from specific time -->
+  <div id="deploy-from-row">
+    <input type="time" id="deploy-time" title="Pick the time the schedule actually started">
+    <button id="deploy-from-btn" onclick="launchDayFrom()">&#9654; DEPLOY FROM THIS TIME</button>
+  </div>
+
+  <!-- Status -->
+  <div id="status-bar">
+    <span id="status-icon">&#9679;</span>
+    <span id="status-text">Ready — press START to build today's schedule</span>
+  </div>
+
+  <!-- Counts -->
+  <div id="counts-row">
+    <div class="count-chip feed"><span class="num" id="ct-feeds">0</span><span class="lbl">Feeds</span></div>
+    <div class="count-chip flush"><span class="num" id="ct-flushes">0</span><span class="lbl">Flushes</span></div>
+    <div class="count-chip med"><span class="num" id="ct-meds">0</span><span class="lbl">Meds</span></div>
+  </div>
+
+  <!-- Active Timeline -->
+  <div id="timeline-section">
+    <div class="tl-header">
+      <div class="tl-title">TODAY'S SCHEDULE</div>
+      <div class="tl-badge" id="tl-count">0 EVENTS</div>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings-section">
+    <details>
+      <summary>
+        <span>&#9881; SETTINGS</span>
+        <span id="conn-dot" class="conn-dot offline" style="margin-left:auto;margin-right:4px"></span>
+      </summary>
+      <div>
+        <div class="settings-tabs">
+          <button class="stab active" onclick="showTab('feed',event)">FEED</button>
+          <button class="stab" onclick="showTab('h2o',event)">H&#8322;O</button>
+          <button class="stab" onclick="showTab('meds',event)">MEDS</button>
+          <button class="stab" onclick="showTab('conn',event)">CONNECTIONS</button>
+        </div>
+
+        <!-- Feed -->
+        <div class="stab-panel active" id="tab-feed">
+          <div class="row2">
+            <div class="field-row"><label>Feedings per Day</label><input type="number" id="s-feedCount" min="1" max="24"></div>
+            <div class="field-row">
+              <label>Time Between Feeds</label>
+              <div class="hm-row">
+                <input type="number" id="s-feedIntervalH" min="0" max="23">
+                <span class="hm-unit">hr</span>
+                <input type="number" id="s-feedIntervalM" min="0" max="59">
+                <span class="hm-unit">min</span>
+              </div>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field-row"><label>Volume (mL)</label><input type="number" id="s-feedVol" min="0"></div>
+            <div class="field-row"><label>Rate mL/hr (0=bolus)</label><input type="number" id="s-feedRate" min="0"></div>
+          </div>
+          <div class="field-row"><label>Event Duration (min)</label><input type="number" id="s-dur" min="5" max="120"></div>
+        </div>
+
+        <!-- H2O -->
+        <div class="stab-panel" id="tab-h2o">
+          <div class="toggle-row">
+            <span class="toggle-label">Enable Water Flushes</span>
+            <label class="toggle"><input type="checkbox" id="s-flushEnabled"><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
+          </div>
+          <div id="s-flushes-list"></div>
+          <button class="btn btn-ghost btn-sm" onclick="addFlushUI()" style="margin-bottom:8px">+ ADD FLUSH</button>
+        </div>
+
+        <!-- Meds -->
+        <div class="stab-panel" id="tab-meds">
+          <div id="s-meds-list"></div>
+          <button class="btn btn-ghost btn-sm" onclick="addMedUI()" style="margin-bottom:8px">+ ADD MEDICATION</button>
+        </div>
+
+        <!-- Connections -->
+        <div class="stab-panel" id="tab-conn">
+          <!-- Patient -->
+          <div class="section-head">PATIENT</div>
+          <div class="field-row"><label>Patient Name</label><input type="text" id="s-name" placeholder="e.g. Alex"></div>
+
+          <!-- Google Calendar -->
+          <div class="section-head">GOOGLE CALENDAR</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:.82rem;color:var(--ink-muted);margin-bottom:10px" id="sync-auth-status">Not signed in</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <button class="btn btn-ghost btn-sm" onclick="signIn()">SIGN IN</button>
+            <button class="btn btn-danger btn-sm" onclick="signOut()">SIGN OUT</button>
+          </div>
+          <div class="field-row">
+            <label>Target Calendar</label>
+            <select id="s-calId"><option value="primary">My primary calendar</option></select>
+          </div>
+
+          <!-- App Version (APK only) -->
+          <div class="section-head" id="s-ver-head" style="display:none">APP VERSION</div>
+          <div id="s-ver-section" style="display:none;margin-bottom:4px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;margin-bottom:8px">
+              <span style="font-family:'Share Tech Mono',monospace;font-size:.82rem;color:var(--ink-muted)">Installed: <span id="s-app-version" style="color:var(--ink-soft)">—</span></span>
+              <button class="btn btn-ghost btn-sm" onclick="checkForUpdates(true)">CHECK</button>
+            </div>
+            <div id="s-update-notice" style="display:none;background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.3);border-radius:8px;padding:12px 14px;margin-bottom:8px">
+              <div style="font-family:'Orbitron',sans-serif;font-size:.68rem;color:var(--success);letter-spacing:.1em;margin-bottom:5px">&#11014; UPDATE AVAILABLE</div>
+              <div style="font-size:.82rem;color:var(--ink-soft);margin-bottom:10px">Version <strong id="s-update-ver" style="color:var(--ink)"></strong> is ready to install</div>
+              <a id="s-update-url" href="https://github.com/Dracon420/care-schedule-android/releases/latest" target="_blank" class="btn btn-primary btn-sm" style="display:inline-block;text-decoration:none">&#11015; DOWNLOAD UPDATE</a>
+            </div>
+            <div id="s-up-to-date" style="display:none;font-family:'Share Tech Mono',monospace;font-size:.78rem;color:var(--success);padding:4px 0">&#10003; You are on the latest version</div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="section-head">NOTIFICATIONS</div>
+          <div class="toggle-row">
+            <span class="toggle-label">Enable Task Alerts</span>
+            <label class="toggle"><input type="checkbox" id="s-notifEnabled" onchange="toggleAlertsSection()"><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
+          </div>
+          <div id="s-alerts-section" style="display:none">
+            <p style="font-size:.8rem;color:var(--ink-muted);margin-bottom:10px">Set one or more alerts per task. Multiple alerts give you reminders leading up to each event.</p>
+            <div id="s-alerts-list"></div>
+            <button class="btn btn-ghost btn-sm" onclick="addAlertUI()" style="margin-bottom:8px">+ ADD ALERT</button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="saveSettingsUI()">SAVE SETTINGS</button>
+          <button class="btn btn-ghost btn-sm" onclick="openWizard()">RE-RUN WIZARD</button>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- Schedule Preview -->
+  <div class="settings-section" style="margin-top:8px">
+    <details id="preview-details">
+      <summary>
+        <span>&#128337; SCHEDULE PREVIEW</span>
+        <span id="preview-updated" style="font-family:'Share Tech Mono',monospace;font-size:.66rem;color:var(--ink-muted);font-weight:400;text-transform:none;letter-spacing:0;margin-left:8px;flex-shrink:0">refreshes every 5 min</span>
+      </summary>
+      <div>
+        <p style="font-size:.78rem;color:var(--ink-muted);margin-bottom:10px">What today looks like if started right now.</p>
+        <div class="timeline" id="preview-list"></div>
+      </div>
+    </details>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+// ══════════ CONFIG ══════════
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+const SETTINGS_KEY     = 'careSystemSettings_v2';
+const TOKEN_KEY        = 'careSystemToken_v1';
+const SCHEDULE_KEY     = 'careSystemSchedule_v1';
+
+// ══════════ SETTINGS ══════════
+function defaultSettings() {
+  return {
+    patientName: '',
+    feedCount: 6,
+    feedIntervalHours: 3,
+    feedVolumeMl: 200,
+    feedRateMlHr: 0,
+    eventDurationMinutes: 15,
+    flushEnabled: false,
+    flushes: [],
+    meds: [],
+    calendarId: 'primary',
+    notificationsEnabled: false,
+    notificationAlerts: [{ offsetMins: 5 }],
+    setupComplete: false
+  };
+}
+
+function getSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) return Object.assign(defaultSettings(), JSON.parse(raw));
+  } catch(e) {}
+  return defaultSettings();
+}
+
+function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
+
+// ══════════ GOOGLE AUTH ══════════
+let tokenClient  = null;
+let currentToken = null;
+
+function initGoogleAuth() {
+  if (GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID')) return;
+  try {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/calendar',
+      callback: handleTokenResponse,
+      error_callback: (err) => {
+        console.error('GIS error_callback:', err);
+        if (err.type === 'popup_blocked') {
+          setStatus('error','&#9888;','Sign-in popup was blocked — allow popups for this site in your browser settings.');
+        } else if (err.type === 'popup_closed') {
+          setStatus('','&#9679;','Sign-in cancelled.');
+        } else {
+          setStatus('error','&#9888;','Google sign-in error: ' + (err.type || JSON.stringify(err)));
+        }
+        showSignedOut();
+      }
+    });
+    const saved = localStorage.getItem(TOKEN_KEY);
+    if (saved) {
+      currentToken = JSON.parse(saved);
+      if (currentToken.expires_at && Date.now() < currentToken.expires_at) showSignedIn();
+      else { currentToken = null; localStorage.removeItem(TOKEN_KEY); showSignedOut(); }
+    } else { showSignedOut(); }
+  } catch(e) {
+    console.error('GIS init failed:', e);
+    setStatus('error','&#9888;','Google library failed to initialize: ' + e.message);
+  }
+}
+
+function handleTokenResponse(resp) {
+  if (resp.error) {
+    console.error('Google auth error:', resp);
+    if (resp.error !== 'access_denied') {
+      setStatus('error','&#9888;','Google sign-in failed: ' + resp.error);
+    } else {
+      setStatus('error','&#9888;','Sign-in cancelled or access denied.');
+    }
+    showSignedOut(); return;
+  }
+  currentToken = resp;
+  currentToken.expires_at = Date.now() + (resp.expires_in - 60) * 1000;
+  localStorage.setItem(TOKEN_KEY, JSON.stringify(currentToken));
+  showSignedIn();
+  fetchCalendars();
+}
+
+let _signInWait = 0;
+function signIn() {
+  if (GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID')) { setStatus('error','&#9888;','Client ID not configured. See SETUP.md.'); return; }
+
+  // ── APK mode: Google's JS library doesn't work in Android WebViews.
+  //    Use the native Android Google Sign-In instead via AndroidBridge.
+  if (window.AndroidBridge) {
+    if (currentToken && currentToken.expires_at && Date.now() < currentToken.expires_at) { showSignedIn(); return; }
+    setStatus('','<span class="spin"></span>','Opening Google sign-in...');
+    window.AndroidBridge.requestGoogleSignIn();
+    return;
+  }
+
+  // ── Browser / PWA mode: use Google Identity Services JS library ──────
+  if (!tokenClient) {
+    _signInWait++;
+    if (_signInWait > 8) {
+      _signInWait = 0;
+      setStatus('error','&#9888;','Google library failed to load — check your internet connection, or the Netlify URL may not be in your Google Cloud Console authorized origins.');
+      return;
+    }
+    setStatus('','<span class="spin"></span>','Loading Google library...');
+    setTimeout(signIn, 800);
+    return;
+  }
+  _signInWait = 0;
+  if (currentToken && currentToken.expires_at && Date.now() < currentToken.expires_at) { showSignedIn(); return; }
+  tokenClient.requestAccessToken({ prompt: 'select_account' });
+}
+
+// ── Called by Android after native Google Sign-In succeeds ───────────────
+window.onAndroidGoogleToken = function(accessToken, expiresIn) {
+  currentToken = {
+    access_token: accessToken,
+    expires_at: Date.now() + (parseInt(expiresIn) - 60) * 1000
+  };
+  localStorage.setItem(TOKEN_KEY, JSON.stringify(currentToken));
+  showSignedIn();
+  fetchCalendars();
+  setStatus('success','&#10003;','Signed in — Google Calendar sync active.');
+};
+
+// ── Called by Android if native sign-in fails ────────────────────────────
+window.onAndroidSignInError = function(error) {
+  setStatus('error','&#9888;','Google sign-in failed: ' + error);
+  showSignedOut();
+};
+
+function signOut() {
+  // In APK there's no GIS library to call revoke on
+  if (!window.AndroidBridge && currentToken) {
+    try { google.accounts.oauth2.revoke(currentToken.access_token, () => {}); } catch(e) {}
+  }
+  currentToken = null; localStorage.removeItem(TOKEN_KEY); showSignedOut();
+}
+
+function showSignedIn() {
+  document.getElementById('conn-dot').className = 'conn-dot online';
+  document.getElementById('sync-auth-status').textContent = 'Signed in — calendar sync active';
+  document.getElementById('w-auth-status').textContent = 'Signed in ✓';
+  document.getElementById('w-signin-btn').textContent = 'SIGNED IN ✓';
+  if (wizStep === 4) document.getElementById('w-cal-field').style.display = 'block';
+}
+
+function showSignedOut() {
+  document.getElementById('conn-dot').className = 'conn-dot offline';
+  document.getElementById('sync-auth-status').textContent = 'Not signed in';
+  document.getElementById('w-auth-status').textContent = 'Not signed in';
+  document.getElementById('w-signin-btn').textContent = 'SIGN IN WITH GOOGLE';
+  document.getElementById('w-cal-field').style.display = 'none';
+}
+
+// ══════════ CALENDAR API ══════════
+async function calApi(path, method='GET', body=null) {
+  if (!currentToken) throw new Error('Not signed in');
+  const res = await fetch('https://www.googleapis.com/calendar/v3' + path, {
+    method,
+    headers: { Authorization: 'Bearer ' + currentToken.access_token, 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || 'Calendar API error ' + res.status);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+async function fetchCalendars() {
+  try {
+    const data  = await calApi('/users/me/calendarList');
+    const owned = (data.items||[]).filter(c => c.accessRole==='owner'||c.accessRole==='writer');
+    const opts  = ['<option value="primary">My primary calendar</option>'];
+    owned.forEach(c => { if (c.id!=='primary') opts.push(`<option value="${escHtml(c.id)}">${escHtml(c.summary)}</option>`); });
+    const html = opts.join('');
+    document.getElementById('s-calId').innerHTML = html;
+    document.getElementById('w-calId').innerHTML = html;
+    const s = getSettings();
+    document.getElementById('s-calId').value = s.calendarId || 'primary';
+    document.getElementById('w-calId').value = s.calendarId || 'primary';
+  } catch(e) { console.warn('fetchCalendars failed', e); }
+}
+
+async function createCalendarEvent(calId, event) {
+  return calApi('/calendars/'+encodeURIComponent(calId)+'/events','POST',event);
+}
+
+// ══════════ SCHEDULE BUILDER ══════════
+function buildSchedule(s, startTime) {
+  const now    = startTime || new Date();
+  const dayEnd = new Date(now.getTime() + 24*3600*1000);
+  const durMs  = (s.eventDurationMinutes||15) * 60*1000;
+  const events = [];
+  const counts = { feeds:0, flushes:0, meds:0 };
+
+  // Feed slots
+  const feedSlots = [];
+  for (let i = 0; i < s.feedCount; i++) {
+    const start = new Date(now.getTime() + i * s.feedIntervalHours * 3600*1000);
+    const end   = new Date(start.getTime() + durMs);
+    feedSlots.push({ start, end });
+    const parts = [];
+    if (s.feedVolumeMl  > 0) parts.push(`${s.feedVolumeMl} mL`);
+    if (s.feedRateMlHr  > 0) parts.push(`at ${s.feedRateMlHr} mL/hr`);
+    events.push({ title:`Feeding ${i+1}`, emoji:'🍼', type:'feed', start, end, detail:parts.join(' · ') });
+    counts.feeds++;
+  }
+
+  // Flushes
+  if (s.flushEnabled) {
+    (s.flushes||[]).forEach(flush => {
+      const vol      = flush.volumeMl || 15;
+      const offsetMs = (flush.offsetMins||0) * 60*1000;
+      if (flush.timing === 'before-feed') {
+        feedSlots.forEach((ft,i) => {
+          const fs = new Date(ft.start.getTime() - offsetMs);
+          events.push({ title:`Water Flush (${vol} mL)`, emoji:'💧', type:'flush', start:fs, end:new Date(fs.getTime()+durMs), detail:`${vol} mL · before Feeding ${i+1}` });
+          counts.flushes++;
+        });
+      } else if (flush.timing === 'after-feed') {
+        feedSlots.forEach((ft,i) => {
+          const fs = new Date(ft.end.getTime() + offsetMs);
+          events.push({ title:`Water Flush (${vol} mL)`, emoji:'💧', type:'flush', start:fs, end:new Date(fs.getTime()+durMs), detail:`${vol} mL · after Feeding ${i+1}` });
+          counts.flushes++;
+        });
+      } else if (flush.timing === 'set-time') {
+        if (flush.setTimeMode === 'between') {
+          feedSlots.forEach((ft,i) => {
+            if (i < feedSlots.length-1) {
+              const mid = new Date((ft.start.getTime()+feedSlots[i+1].start.getTime())/2);
+              events.push({ title:`Water Flush (${vol} mL)`, emoji:'💧', type:'flush', start:mid, end:new Date(mid.getTime()+durMs), detail:`${vol} mL · between Feeding ${i+1} & ${i+2}` });
+              counts.flushes++;
+            }
+          });
+        } else {
+          (flush.times||[]).forEach(ts => {
+            if (!ts) return;
+            const [hh,mm] = ts.split(':').map(Number);
+            const t = new Date(); t.setHours(hh,mm,0,0);
+            events.push({ title:`Water Flush (${vol} mL)`, emoji:'💧', type:'flush', start:new Date(t), end:new Date(t.getTime()+durMs), detail:`${vol} mL` });
+            counts.flushes++;
+          });
+        }
+      }
+    });
+  }
+
+  // Meds
+  (s.meds||[]).forEach(med => {
+    if (!med.name) return;
+    const parts = [];
+    if (med.dose)  parts.push(med.dose);
+    if (med.route) parts.push(med.route==='gtube'?'via G-Tube':med.route);
+    const detail = parts.join(' · ');
+    if (med.mode === 'times' && med.times && med.times.length > 0) {
+      med.times.forEach(ts => {
+        if (!ts) return;
+        const [hh,mm] = ts.split(':').map(Number);
+        const t = new Date(); t.setHours(hh,mm,0,0);
+        events.push({ title:med.name, emoji:'💊', type:'med', start:new Date(t), end:new Date(t.getTime()+durMs), detail });
+        counts.meds++;
+      });
+    } else if (med.intervalHours > 0) {
+      const intMs = med.intervalHours * 3600*1000;
+      let t = new Date(now), safety = 0;
+      while (t < dayEnd && safety < 48) {
+        events.push({ title:med.name, emoji:'💊', type:'med', start:new Date(t), end:new Date(t.getTime()+durMs), detail });
+        counts.meds++;
+        t = new Date(t.getTime()+intMs); safety++;
+      }
+    }
+  });
+
+  events.sort((a,b) => a.start - b.start);
+  return { events, counts };
+}
+
+// ══════════ LAUNCH DAY ══════════
+let activeEvents = [];
+
+async function launchDay(startTime) {
+  const s   = getSettings();
+  const btn = document.getElementById('launch-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> BUILDING SCHEDULE...';
+  try {
+    const { events, counts } = buildSchedule(s, startTime);
+    if (!events.length) { setStatus('error','&#9888;','No events generated — check your settings.'); return; }
+
+    const pushedIds = [];
+    let calIdUsed   = null;
+
+    if (currentToken && currentToken.expires_at && Date.now() < currentToken.expires_at) {
+      setStatus('','<span class="spin"></span>',`Pushing ${events.length} events to Google Calendar...`);
+      calIdUsed = s.calendarId || 'primary';
+      let pushed = 0;
+      for (let i = 0; i < events.length; i += 5) {
+        const batch   = events.slice(i,i+5);
+        const results = await Promise.all(batch.map(ev => {
+          const desc = [ev.detail,'Auto-scheduled by Care Management System'].filter(Boolean).join('\n');
+          return createCalendarEvent(calIdUsed, {
+            summary: ev.emoji+' '+ev.title, description: desc,
+            start:{ dateTime:ev.start.toISOString() }, end:{ dateTime:ev.end.toISOString() },
+            reminders:{ useDefault:false, overrides:[{ method:'popup', minutes:5 }] }
+          });
+        }));
+        results.forEach(r => { if (r?.id) pushedIds.push(r.id); });
+        pushed += batch.length;
+      }
+      setStatus('success','&#10003;',`${pushed} events pushed to Google Calendar!`);
+    } else {
+      setStatus('success','&#10003;',`${events.length} events scheduled (sign in to sync to Google Calendar)`);
+    }
+
+    if (s.notificationsEnabled) await scheduleNotifications(events, s.notificationAlerts);
+    activeEvents = events;
+    renderTimeline(events, counts);
+    startNextTaskTracker();
+
+    // Persist state so Stop/Clear and the widget page can read it
+    const schedState = JSON.stringify({
+      running: true, calendarId: calIdUsed, pushedIds,
+      events: events.map(ev => ({
+        title:ev.title, emoji:ev.emoji, type:ev.type,
+        detail:ev.detail||'', start:ev.start.toISOString(), end:ev.end.toISOString()
+      }))
+    });
+    localStorage.setItem(SCHEDULE_KEY, schedState);
+    // Notify Android native widget bridge (only present inside the APK)
+    if (window.AndroidBridge) window.AndroidBridge.updateSchedule(schedState);
+    setScheduleRunning(true);
+
+  } catch(err) {
+    console.error(err);
+    setStatus('error','&#9888;','Error: '+err.message);
+    btn.innerHTML = '&#9654; START TODAY\'S SCHEDULE';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ══════════ DEPLOY FROM SPECIFIC TIME ══════════
+function launchDayFrom() {
+  const val = document.getElementById('deploy-time').value;
+  if (!val) { setStatus('error','&#9888;','Select a start time first.'); return; }
+  const [h, m] = val.split(':').map(Number);
+  const t = new Date();
+  t.setHours(h, m, 0, 0);
+  launchDay(t);
+}
+
+// ══════════ SCHEDULE RUNNING STATE ══════════
+function setScheduleRunning(running) {
+  const stopBtn = document.getElementById('stop-btn');
+  stopBtn.style.display = running ? 'block' : 'none';
+  // Always reset text + state — prevents button getting stuck on "CLEARING..."
+  stopBtn.disabled = false;
+  stopBtn.innerHTML = '&#9632; STOP &amp; CLEAR SCHEDULE';
+  document.getElementById('launch-btn').innerHTML = running
+    ? '&#9654; RESTART SCHEDULE'
+    : '&#9654; START TODAY\'S SCHEDULE';
+}
+
+// ══════════ STOP & CLEAR ══════════
+async function stopAndClear() {
+  if (!confirm('Stop the current schedule and remove events from Google Calendar?')) return;
+
+  const stopBtn = document.getElementById('stop-btn');
+  stopBtn.disabled = true;
+  stopBtn.textContent = 'CLEARING...';
+
+  // Cancel all notification timeouts
+  alertTimeouts.forEach(t => clearTimeout(t));
+  alertTimeouts = [];
+
+  // Stop next-task tracker
+  if (nextTaskTimer) { clearInterval(nextTaskTimer); nextTaskTimer = null; }
+
+  // Delete events from Google Calendar
+  const saved = localStorage.getItem(SCHEDULE_KEY);
+  if (saved) {
+    try {
+      const state = JSON.parse(saved);
+      if (state.pushedIds && state.pushedIds.length && state.calendarId &&
+          currentToken && currentToken.expires_at && Date.now() < currentToken.expires_at) {
+        setStatus('','<span class="spin"></span>',`Removing ${state.pushedIds.length} events from Google Calendar...`);
+        for (let i = 0; i < state.pushedIds.length; i += 5) {
+          await Promise.all(
+            state.pushedIds.slice(i,i+5).map(id =>
+              calApi('/calendars/'+encodeURIComponent(state.calendarId)+'/events/'+encodeURIComponent(id),'DELETE').catch(()=>{})
+            )
+          );
+        }
+      }
+    } catch(e) { console.warn('stop/clear error',e); }
+  }
+
+  // Reset everything
+  activeEvents = [];
+  localStorage.removeItem(SCHEDULE_KEY);
+  if (window.AndroidBridge) window.AndroidBridge.clearSchedule();
+  setScheduleRunning(false);
+  document.getElementById('next-task-card').classList.remove('visible');
+  document.getElementById('timeline-section').classList.remove('visible');
+  document.getElementById('counts-row').classList.remove('visible');
+  setStatus('','&#9679;','Schedule cleared — press START to build a new schedule.');
+  stopBtn.disabled = false;
+}
+
+// ══════════ NOTIFICATIONS ══════════
+let alertTimeouts = [];
+
+async function scheduleNotifications(events, alerts) {
+  if (!('Notification' in window) || Notification.permission === 'denied') return;
+  if (Notification.permission !== 'granted') {
+    if (await Notification.requestPermission() !== 'granted') return;
+  }
+  const reg = await navigator.serviceWorker.ready.catch(() => null);
+  if (!reg) return;
+
+  alertTimeouts.forEach(t => clearTimeout(t));
+  alertTimeouts = [];
+
+  const now      = Date.now();
+  const toFire   = (alerts && alerts.length) ? alerts : [{ offsetMins:5 }];
+
+  events.forEach(ev => {
+    toFire.forEach(alert => {
+      const offMs = (alert.offsetMins||5) * 60000;
+      const delay = ev.start.getTime() - offMs - now;
+      if (delay < 0) return;
+      const t = setTimeout(() => {
+        const mins = alert.offsetMins||5;
+        const when = mins === 0 ? 'Starting now' : mins < 60 ? `in ${mins} min` : `in ${(mins/60).toFixed(1).replace('.0','')} hr`;
+        reg.showNotification('Care Management System', {
+          body: `${ev.emoji} ${ev.title}${ev.detail?' — '+ev.detail:''}\n${when}`,
+          icon:'./icon.svg', badge:'./icon.svg',
+          tag:`care-${ev.start.getTime()}-${mins}`,
+          requireInteraction: true,
+          data:{ url:'./index.html' }
+        });
+      }, delay);
+      alertTimeouts.push(t);
+    });
+  });
+}
+
+// ══════════ NEXT TASK TRACKER ══════════
+let nextTaskTimer = null;
+
+function startNextTaskTracker() {
+  updateNextTask();
+  if (nextTaskTimer) clearInterval(nextTaskTimer);
+  nextTaskTimer = setInterval(updateNextTask, 30000);
+}
+
+function updateNextTask() {
+  const now  = new Date();
+  const next = activeEvents.find(ev => ev.end > now);
+  const card = document.getElementById('next-task-card');
+  if (!next) {
+    card.classList.remove('visible');
+    // All events have ended — auto-reset to idle so the user sees "Start" again
+    if (activeEvents.length > 0) autoCompleteSchedule();
+    return;
+  }
+  card.classList.add('visible');
+
+  const minsLeft = Math.round((next.start - now) / 60000);
+  document.getElementById('nt-emoji').textContent   = next.emoji;
+  document.getElementById('nt-name').textContent    = next.title;
+  document.getElementById('nt-detail').textContent  = next.detail || '';
+  document.getElementById('nt-time').textContent    = fmtTime(next.start);
+
+  if (minsLeft <= 0) {
+    document.getElementById('nt-countdown').textContent = 'NOW';
+    document.getElementById('nt-countdown').style.color = 'var(--feed)';
+  } else if (minsLeft < 60) {
+    document.getElementById('nt-countdown').textContent = `${minsLeft} min`;
+    document.getElementById('nt-countdown').style.color = minsLeft <= 10 ? 'var(--warn)' : 'var(--cyan)';
+  } else {
+    const h = Math.floor(minsLeft/60), m = minsLeft%60;
+    document.getElementById('nt-countdown').textContent = m > 0 ? `${h}h ${m}m` : `${h}h`;
+    document.getElementById('nt-countdown').style.color = 'var(--cyan)';
+  }
+}
+
+function autoCompleteSchedule() {
+  // Stop the interval so this only fires once
+  if (nextTaskTimer) { clearInterval(nextTaskTimer); nextTaskTimer = null; }
+  // Cancel any pending alert timeouts
+  alertTimeouts.forEach(t => clearTimeout(t));
+  alertTimeouts = [];
+  // Wipe state
+  activeEvents = [];
+  localStorage.removeItem(SCHEDULE_KEY);
+  if (window.AndroidBridge) window.AndroidBridge.clearSchedule();
+  // Reset UI
+  setScheduleRunning(false);
+  document.getElementById('timeline-section').classList.remove('visible');
+  document.getElementById('counts-row').classList.remove('visible');
+  setStatus('success','&#10003;','Today\'s schedule is complete! Press START to build tomorrow\'s schedule.');
+}
+
+// ══════════ TIMELINE RENDER ══════════
+function renderTimeline(events, counts) {
+  document.getElementById('ct-feeds').textContent   = counts.feeds;
+  document.getElementById('ct-flushes').textContent = counts.flushes;
+  document.getElementById('ct-meds').textContent    = counts.meds;
+  document.getElementById('counts-row').classList.add('visible');
+  const now = new Date();
+  document.getElementById('timeline').innerHTML = events.map(ev => tlItemHtml(ev, ev.start < now, false)).join('');
+  document.getElementById('tl-count').textContent = events.length+' EVENTS';
+  document.getElementById('timeline-section').classList.add('visible');
+}
+
+function tlItemHtml(ev, past, preview) {
+  return `<div class="tl-item ${ev.type}${past?' past':''}${preview?' preview-item':''}">
+    <div class="tl-time">${fmtTime(ev.start)}</div>
+    <div class="tl-body">
+      <div class="tl-name">${ev.emoji} ${escHtml(ev.title)}</div>
+      ${ev.detail?`<div class="tl-detail">${escHtml(ev.detail)}</div>`:''}
+    </div>
+  </div>`;
+}
+
+// ══════════ SCHEDULE PREVIEW ══════════
+let previewTimer = null;
+
+function refreshPreview() {
+  try {
+    const s = getSettings();
+    const { events } = buildSchedule(s);
+    const now = new Date();
+    document.getElementById('preview-list').innerHTML = events.map(ev => tlItemHtml(ev, ev.start < now, true)).join('');
+    const t = new Date();
+    document.getElementById('preview-updated').textContent = `updated ${fmtTime(t)}`;
+  } catch(e) { console.warn('preview error', e); }
+}
+
+function startPreviewTimer() {
+  refreshPreview();
+  if (previewTimer) clearInterval(previewTimer);
+  previewTimer = setInterval(refreshPreview, 5 * 60 * 1000); // every 5 min
+}
+
+// ══════════ CLOCK ══════════
+function startClock() {
+  updateClock();
+  setInterval(updateClock, 1000);
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('hdr-time').textContent = fmtTime(now);
+  document.getElementById('hdr-date').textContent = now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+}
+
+// ══════════ SETTINGS UI ══════════
+function loadSettingsUI() {
+  const s   = getSettings();
+  const fhm = splitHM(s.feedIntervalHours||3);
+  document.getElementById('s-feedCount').value      = s.feedCount;
+  document.getElementById('s-feedIntervalH').value  = fhm.h;
+  document.getElementById('s-feedIntervalM').value  = fhm.m;
+  document.getElementById('s-feedVol').value        = s.feedVolumeMl;
+  document.getElementById('s-feedRate').value       = s.feedRateMlHr;
+  document.getElementById('s-dur').value            = s.eventDurationMinutes;
+  document.getElementById('s-flushEnabled').checked = s.flushEnabled;
+  document.getElementById('s-name').value           = s.patientName||'';
+  document.getElementById('s-calId').value          = s.calendarId||'primary';
+  document.getElementById('s-notifEnabled').checked = s.notificationsEnabled;
+  renderFlushesUI(s.flushes||[]);
+  renderMedsUI(s.meds||[]);
+  renderAlertsUI(s.notificationAlerts||[{ offsetMins:5 }]);
+  toggleAlertsSection();
+  updatePatientName(s.patientName);
+}
+
+function saveSettingsUI() {
+  const s = getSettings();
+  s.feedCount            = parseInt(document.getElementById('s-feedCount').value)||6;
+  s.feedIntervalHours    = joinHM(document.getElementById('s-feedIntervalH').value, document.getElementById('s-feedIntervalM').value)||3;
+  s.feedVolumeMl         = parseInt(document.getElementById('s-feedVol').value)||0;
+  s.feedRateMlHr         = parseInt(document.getElementById('s-feedRate').value)||0;
+  s.eventDurationMinutes = parseInt(document.getElementById('s-dur').value)||15;
+  s.flushEnabled         = document.getElementById('s-flushEnabled').checked;
+  s.flushes              = flushesData.slice();
+  s.patientName          = document.getElementById('s-name').value.trim();
+  s.calendarId           = document.getElementById('s-calId').value;
+  s.meds                 = collectMedsUI();
+  s.notificationsEnabled = document.getElementById('s-notifEnabled').checked;
+  s.notificationAlerts   = alertsData.slice();
+  saveSettings(s);
+  updatePatientName(s.patientName);
+  refreshPreview();
+  setStatus('success','&#10003;','Settings saved.');
+}
+
+function updatePatientName(name) {
+  const n = name || '';
+  document.getElementById('brand-name').textContent = n ? `${n}'s Daily Schedule` : 'Daily Schedule';
+  document.title = (n||'Care') + ' — Care Management System';
+}
+
+function toggleAlertsSection() {
+  const on = document.getElementById('s-notifEnabled').checked;
+  document.getElementById('s-alerts-section').style.display = on ? 'block' : 'none';
+}
+
+// ══════════ NOTIFICATION ALERTS UI ══════════
+let alertsData = [];
+
+function renderAlertsUI(alerts) {
+  alertsData = alerts.map(a => Object.assign({ offsetMins:5 }, a));
+  const el = document.getElementById('s-alerts-list');
+  if (!alertsData.length) { el.innerHTML = ''; return; }
+  el.innerHTML = alertsData.map((a, i) => {
+    const hm = splitMins(a.offsetMins||5);
+    return `<div class="rule-card alert-card" id="al-${i}">
+      <button class="rule-del" onclick="delAlertUI(${i})">&times;</button>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="hm-row" style="flex:1;min-width:140px">
+          <input type="number" id="al-${i}-h" value="${hm.h}" min="0" max="23" style="max-width:60px" onchange="updateAlertUI(${i})">
+          <span class="hm-unit">hr</span>
+          <input type="number" id="al-${i}-m" value="${hm.m}" min="0" max="59" style="max-width:60px" onchange="updateAlertUI(${i})">
+          <span class="hm-unit">min</span>
+        </div>
+        <span style="font-size:.8rem;color:var(--ink-muted);white-space:nowrap">before each task</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addAlertUI() {
+  alertsData.push({ offsetMins: 5 });
+  renderAlertsUI(alertsData);
+}
+
+function delAlertUI(i) {
+  alertsData.splice(i,1);
+  renderAlertsUI(alertsData);
+}
+
+function updateAlertUI(i) {
+  const h = parseInt(document.getElementById('al-'+i+'-h').value)||0;
+  const m = parseInt(document.getElementById('al-'+i+'-m').value)||0;
+  alertsData[i].offsetMins = h*60 + m;
+}
+
+// ══════════ FLUSH CARDS ══════════
+let flushesData = [];
+let wizFlushes  = [];
+
+function defaultFlush() {
+  return { volumeMl:15, timing:'before-feed', offsetMins:15, setTimeMode:'times', times:['08:00'] };
+}
+
+function flushCardHtml(i, f, src) {
+  const pfx    = src==='w'?'wf':'sf';
+  const arrRef = src==='w'?'wizFlushes':'flushesData';
+  const delFn  = src==='w'?`wizFlushes.splice(${i},1);renderWizFlushes()`:`delFlushUI(${i})`;
+  const timing = f.timing||'before-feed';
+  const stm    = f.setTimeMode||'times';
+  const off    = splitMins(f.offsetMins||15);
+  const times  = f.times&&f.times.length?f.times:['08:00'];
+  const showOff= timing==='before-feed'||timing==='after-feed';
+  return `
+  <div class="rule-card flush-card" id="${pfx}-${i}">
+    <div class="card-hd">&#128167; Flush Rule ${i+1}</div>
+    <button class="rule-del" onclick="${delFn}">&times;</button>
+    <div class="field-row" style="margin-bottom:12px">
+      <label>Volume (mL)</label>
+      <input type="number" value="${f.volumeMl||15}" min="1" onchange="${arrRef}[${i}].volumeMl=parseInt(this.value)||15">
+    </div>
+    <div class="mode-row" id="${pfx}-${i}-timing-row">
+      <button class="stab${timing==='before-feed'?' active':''}" onclick="setFlushTiming(${i},'${src}','before-feed',this)">BEFORE FEED</button>
+      <button class="stab${timing==='after-feed'?' active':''}" onclick="setFlushTiming(${i},'${src}','after-feed',this)">AFTER FEED</button>
+      <button class="stab${timing==='set-time'?' active':''}" onclick="setFlushTiming(${i},'${src}','set-time',this)">SET TIME</button>
+    </div>
+    <div id="${pfx}-${i}-offset" style="${showOff?'':'display:none'}">
+      <div class="field-row">
+        <label id="${pfx}-${i}-off-lbl">${timing==='after-feed'?'Time After Feed Ends':'Time Before Feed'}</label>
+        <div class="hm-row">
+          <input type="number" id="${pfx}-${i}-offH" value="${off.h}" min="0" max="23" onchange="${arrRef}[${i}].offsetMins=joinMins(this.value,document.getElementById('${pfx}-${i}-offM').value)">
+          <span class="hm-unit">hr</span>
+          <input type="number" id="${pfx}-${i}-offM" value="${off.m}" min="0" max="59" onchange="${arrRef}[${i}].offsetMins=joinMins(document.getElementById('${pfx}-${i}-offH').value,this.value)">
+          <span class="hm-unit">min</span>
+        </div>
+      </div>
+    </div>
+    <div id="${pfx}-${i}-settime" style="${timing==='set-time'?'':'display:none'}">
+      <div class="mode-row" id="${pfx}-${i}-stm-row">
+        <button class="stab${stm==='times'?' active':''}" onclick="setFlushSetTimeMode(${i},'${src}','times',this)">TIMES / DAY</button>
+        <button class="stab${stm==='between'?' active':''}" onclick="setFlushSetTimeMode(${i},'${src}','between',this)">BETWEEN FEEDS</button>
+      </div>
+      <div id="${pfx}-${i}-stm-times" style="${stm==='times'?'':'display:none'}">
+        <div class="field-row"><label>Times per Day</label>
+          <input type="number" id="${pfx}-${i}-tpd" value="${times.length}" min="1" max="12" oninput="updateFlushTimes(${i},'${src}')">
+        </div>
+        <div id="${pfx}-${i}-timepickers">${flushTimePickers(i,times,src)}</div>
+      </div>
+      <div id="${pfx}-${i}-stm-between" style="${stm==='between'?'':'display:none'}">
+        <p class="hint">Flush placed at the midpoint between each consecutive feeding.</p>
+      </div>
+    </div>
+  </div>`;
+}
+
+function flushTimePickers(i,times,src) {
+  const arrRef = src==='w'?'wizFlushes':'flushesData';
+  return (times||[]).map((t,j)=>`
+    <div class="field-row" style="margin-bottom:8px">
+      <label style="font-size:.75rem">Time ${j+1}</label>
+      <input type="time" value="${escAttr(t)}" onchange="${arrRef}[${i}].times[${j}]=this.value">
+    </div>`).join('');
+}
+
+function setFlushTiming(i,src,timing,btn) {
+  const arr = src==='w'?wizFlushes:flushesData;
+  const pfx = src==='w'?'wf':'sf';
+  arr[i].timing = timing;
+  const showOff = timing==='before-feed'||timing==='after-feed';
+  document.getElementById(pfx+'-'+i+'-offset').style.display  = showOff?'':'none';
+  document.getElementById(pfx+'-'+i+'-settime').style.display = timing==='set-time'?'':'none';
+  const lbl = document.getElementById(pfx+'-'+i+'-off-lbl');
+  if (lbl) lbl.textContent = timing==='after-feed'?'Time After Feed Ends':'Time Before Feed';
+  document.getElementById(pfx+'-'+i+'-timing-row').querySelectorAll('.stab').forEach(b=>b.classList.toggle('active',b===btn));
+}
+
+function setFlushSetTimeMode(i,src,mode,btn) {
+  const arr = src==='w'?wizFlushes:flushesData;
+  const pfx = src==='w'?'wf':'sf';
+  arr[i].setTimeMode = mode;
+  document.getElementById(pfx+'-'+i+'-stm-times').style.display   = mode==='times'?'':'none';
+  document.getElementById(pfx+'-'+i+'-stm-between').style.display = mode==='between'?'':'none';
+  document.getElementById(pfx+'-'+i+'-stm-row').querySelectorAll('.stab').forEach(b=>b.classList.toggle('active',b===btn));
+}
+
+function updateFlushTimes(i,src) {
+  const arr  = src==='w'?wizFlushes:flushesData;
+  const pfx  = src==='w'?'wf':'sf';
+  const n    = parseInt(document.getElementById(pfx+'-'+i+'-tpd').value)||1;
+  const curr = arr[i].times||[];
+  while (curr.length<n) curr.push('08:00');
+  arr[i].times = curr.slice(0,n);
+  document.getElementById(pfx+'-'+i+'-timepickers').innerHTML = flushTimePickers(i,arr[i].times,src);
+}
+
+function renderFlushesUI(flushes) {
+  flushesData = flushes.map(f=>Object.assign(defaultFlush(),f));
+  document.getElementById('s-flushes-list').innerHTML = flushesData.map((f,i)=>flushCardHtml(i,f,'s')).join('');
+}
+function addFlushUI() { flushesData.push(defaultFlush()); renderFlushesUI(flushesData); }
+function delFlushUI(i){ flushesData.splice(i,1); renderFlushesUI(flushesData); }
+function renderWizFlushes() { document.getElementById('w-flushes-list').innerHTML = wizFlushes.map((f,i)=>flushCardHtml(i,f,'w')).join(''); }
+function wizAddFlush() { wizFlushes.push(defaultFlush()); renderWizFlushes(); }
+
+// ══════════ MED CARDS ══════════
+let medsData = [];
+let wizMeds  = [];
+
+function defaultMed() { return { name:'New Medication', mode:'interval', intervalHours:8, times:[], dose:'', route:'' }; }
+
+function medCardHtml(i,m,src) {
+  const pfx    = src==='w'?'wmc':'mc';
+  const arrRef = src==='w'?'wizMeds':'medsData';
+  const delFn  = src==='w'?`wizMeds.splice(${i},1);renderWizMeds()`:`delMedUI(${i})`;
+  const mode   = m.mode||'interval';
+  const iH     = m.intervalHours||8;
+  const times  = m.times&&m.times.length?m.times:['08:00'];
+  return `
+  <div class="rule-card med-card" id="${pfx}-${i}">
+    <div class="card-hd">${escHtml(m.name||'Medication')}</div>
+    <button class="rule-del" onclick="${delFn}">&times;</button>
+    <div class="field-row" style="margin-bottom:10px">
+      <label>Medication Name</label>
+      <input type="text" value="${escAttr(m.name)}" onchange="${arrRef}[${i}].name=this.value;document.querySelector('#${pfx}-${i} .card-hd').textContent=this.value||'Medication'">
+    </div>
+    <div class="mode-row" id="${pfx}-${i}-mode-row">
+      <button class="stab${mode==='interval'?' active':''}" onclick="setMedMode(${i},'${src}','interval',this)">INTERVAL</button>
+      <button class="stab${mode==='times'?' active':''}" onclick="setMedMode(${i},'${src}','times',this)">TIMES / DAY</button>
+    </div>
+    <div id="${pfx}-${i}-int" style="${mode==='interval'?'':'display:none'}">
+      <div class="field-row"><label>Repeat Every (hr / min)</label>
+        <div class="hm-row">
+          <input type="number" id="${pfx}-${i}-h" value="${Math.floor(iH)}" min="0" max="23" oninput="updateMedInterval(${i},'${src}')">
+          <span class="hm-unit">hr</span>
+          <input type="number" id="${pfx}-${i}-m" value="${Math.round((iH%1)*60)}" min="0" max="59" oninput="updateMedInterval(${i},'${src}')">
+          <span class="hm-unit">min</span>
+        </div>
+      </div>
+    </div>
+    <div id="${pfx}-${i}-tpd" style="${mode==='times'?'':'display:none'}">
+      <div class="field-row"><label>Times per Day</label>
+        <input type="number" id="${pfx}-${i}-tpd-count" value="${times.length||1}" min="1" max="12" oninput="updateMedTimes(${i},'${src}')">
+      </div>
+      <div id="${pfx}-${i}-timepickers">${medTimePickers(i,times,src)}</div>
+    </div>
+    <div class="row2" style="margin-top:8px">
+      <div class="field-row"><label>Dose</label><input type="text" value="${escAttr(m.dose||'')}" placeholder="e.g. 5 mL" onchange="${arrRef}[${i}].dose=this.value"></div>
+      <div class="field-row"><label>Route</label>
+        <select onchange="${arrRef}[${i}].route=this.value">
+          <option value="" ${!m.route?'selected':''}>—</option>
+          <option value="gtube" ${m.route==='gtube'?'selected':''}>G-Tube</option>
+          <option value="oral" ${m.route==='oral'?'selected':''}>Oral</option>
+          <option value="iv" ${m.route==='iv'?'selected':''}>IV</option>
+        </select>
+      </div>
+    </div>
+  </div>`;
+}
+
+function medTimePickers(i,times,src) {
+  const arrRef = src==='w'?'wizMeds':'medsData';
+  return (times||[]).map((t,j)=>`
+    <div class="field-row" style="margin-bottom:8px">
+      <label style="font-size:.75rem">Time ${j+1}</label>
+      <input type="time" value="${escAttr(t)}" onchange="${arrRef}[${i}].times[${j}]=this.value">
+    </div>`).join('');
+}
+
+function setMedMode(i,src,mode,btn) {
+  const arr=src==='w'?wizMeds:medsData, pfx=src==='w'?'wmc':'mc';
+  arr[i].mode=mode;
+  document.getElementById(pfx+'-'+i+'-int').style.display=mode==='interval'?'':'none';
+  document.getElementById(pfx+'-'+i+'-tpd').style.display=mode==='times'?'':'none';
+  document.getElementById(pfx+'-'+i+'-mode-row').querySelectorAll('.stab').forEach(b=>b.classList.toggle('active',b===btn));
+}
+
+function updateMedInterval(i,src) {
+  const pfx=src==='w'?'wmc':'mc', arr=src==='w'?wizMeds:medsData;
+  arr[i].intervalHours=joinHM(document.getElementById(pfx+'-'+i+'-h').value,document.getElementById(pfx+'-'+i+'-m').value);
+}
+
+function updateMedTimes(i,src) {
+  const arr=src==='w'?wizMeds:medsData, pfx=src==='w'?'wmc':'mc';
+  const n=parseInt(document.getElementById(pfx+'-'+i+'-tpd-count').value)||1;
+  const curr=arr[i].times||[];
+  while(curr.length<n) curr.push('08:00');
+  arr[i].times=curr.slice(0,n);
+  document.getElementById(pfx+'-'+i+'-timepickers').innerHTML=medTimePickers(i,arr[i].times,src);
+}
+
+function renderMedsUI(meds) {
+  medsData=meds.map(m=>Object.assign(defaultMed(),m));
+  document.getElementById('s-meds-list').innerHTML=medsData.map((m,i)=>medCardHtml(i,m,'s')).join('');
+}
+function addMedUI() { medsData.push(defaultMed()); renderMedsUI(medsData); }
+function delMedUI(i){ medsData.splice(i,1); renderMedsUI(medsData); }
+function collectMedsUI() {
+  return medsData.filter(m=>{
+    if(!m.name) return false;
+    if(m.mode==='times') return m.times&&m.times.length>0;
+    return m.intervalHours>0;
+  });
+}
+function renderWizMeds() { document.getElementById('w-meds-list').innerHTML=wizMeds.map((m,i)=>medCardHtml(i,m,'w')).join(''); }
+function wizAddMed() { wizMeds.push(defaultMed()); renderWizMeds(); }
+
+// ── Tabs ──
+function showTab(name,e) {
+  document.querySelectorAll('.stab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(e&&e.target){
+    e.target.closest('.settings-tabs').querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active');
+  }
+}
+
+// ══════════ WIZARD ══════════
+let wizStep = 0;
+
+function openWizard() {
+  wizStep = 0;
+  const s   = getSettings();
+  const fhm = splitHM(s.feedIntervalHours||3);
+  document.getElementById('w-name').value           = s.patientName||'';
+  document.getElementById('w-feedCount').value      = s.feedCount;
+  document.getElementById('w-feedIntervalH').value  = fhm.h;
+  document.getElementById('w-feedIntervalM').value  = fhm.m;
+  document.getElementById('w-feedVol').value        = s.feedVolumeMl;
+  document.getElementById('w-feedRate').value       = s.feedRateMlHr;
+  document.getElementById('w-dur').value            = s.eventDurationMinutes;
+  document.getElementById('w-flushEnabled').checked = s.flushEnabled;
+  wizFlushes = (s.flushes||[]).map(f=>Object.assign(defaultFlush(),f));
+  wizMeds    = (s.meds||[]).map(m=>Object.assign(defaultMed(),m));
+  renderWizFlushes(); renderWizMeds(); wizRender();
+  document.getElementById('wizard-overlay').classList.remove('hidden');
+}
+
+function wizRender() {
+  document.querySelectorAll('.wizard-step').forEach((el,i)=>el.classList.toggle('active',i===wizStep));
+  document.querySelectorAll('.wizard-pip').forEach((el,i)=>{
+    el.classList.toggle('done',  i<wizStep);
+    el.classList.toggle('active',i===wizStep);
+  });
+}
+
+function wizNext() { if(wizStep<4){ wizStep++; wizRender(); } }
+function wizPrev() { if(wizStep>0){ wizStep--; wizRender(); } }
+
+function wizFinish() {
+  const s = getSettings();
+  s.patientName          = document.getElementById('w-name').value.trim();
+  s.feedCount            = parseInt(document.getElementById('w-feedCount').value)||6;
+  s.feedIntervalHours    = joinHM(document.getElementById('w-feedIntervalH').value,document.getElementById('w-feedIntervalM').value)||3;
+  s.feedVolumeMl         = parseInt(document.getElementById('w-feedVol').value)||0;
+  s.feedRateMlHr         = parseInt(document.getElementById('w-feedRate').value)||0;
+  s.eventDurationMinutes = parseInt(document.getElementById('w-dur').value)||15;
+  s.flushEnabled         = document.getElementById('w-flushEnabled').checked;
+  s.flushes              = wizFlushes.slice();
+  s.calendarId           = document.getElementById('w-calId').value;
+  s.meds = wizMeds.filter(m=>{ if(!m.name) return false; if(m.mode==='times') return m.times&&m.times.length>0; return m.intervalHours>0; });
+  s.setupComplete = true;
+  saveSettings(s);
+  document.getElementById('wizard-overlay').classList.add('hidden');
+  loadSettingsUI();
+  updatePatientName(s.patientName);
+  refreshPreview();
+  setStatus('success','&#10003;','Setup complete! Press START to build today\'s schedule.');
+}
+
+// ══════════ UPDATE CHECK ══════════
+function compareVersions(a, b) {
+  const pa = String(a).split('.').map(Number);
+  const pb = String(b).split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const diff = (pa[i]||0) - (pb[i]||0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+async function checkForUpdates(manual) {
+  if (!window.AndroidBridge) return;
+  let installed = 'unknown';
+  try { installed = window.AndroidBridge.getAppVersion(); } catch(e) {}
+  // Guard: old APKs don't have getAppVersion() — skip comparison to avoid false positives
+  if (!installed || installed === 'unknown') {
+    document.getElementById('s-app-version').textContent = 'unknown';
+    if (manual) setStatus('','&#9679;','Install the latest APK from GitHub to enable update checks.');
+    return;
+  }
+  const verEl    = document.getElementById('s-app-version');
+  const notice   = document.getElementById('s-update-notice');
+  const upToDate = document.getElementById('s-up-to-date');
+  const updateVer= document.getElementById('s-update-ver');
+  const updateUrl= document.getElementById('s-update-url');
+  if (verEl) verEl.textContent = 'v' + installed;
+  // Hide stale result while re-checking
+  if (manual) { if (notice) notice.style.display='none'; if (upToDate) upToDate.style.display='none'; }
+  try {
+    const resp = await fetch('./version.json?_=' + Date.now());
+    if (!resp.ok) throw new Error('not found');
+    const data = await resp.json();
+    if (data.latest && compareVersions(data.latest, installed) > 0) {
+      if (updateVer) updateVer.textContent = data.latest;
+      if (updateUrl && data.releaseUrl) updateUrl.href = data.releaseUrl;
+      if (notice)   notice.style.display   = 'block';
+      if (upToDate) upToDate.style.display = 'none';
+      // Also surface a status-bar nudge
+      if (manual) setStatus('success','&#11014;','Update v'+data.latest+' available — see Connections &rarr; App Version');
+    } else {
+      if (notice)   notice.style.display   = 'none';
+      if (upToDate) upToDate.style.display = 'block';
+      if (manual) setStatus('success','&#10003;','App is up to date (v'+installed+')');
+    }
+  } catch(e) {
+    console.warn('Update check failed', e);
+    if (manual) setStatus('','&#9679;','Could not check for updates — check your connection.');
+  }
+}
+
+// ══════════ STATUS ══════════
+function setStatus(type,icon,text) {
+  document.getElementById('status-bar').className = type||'';
+  document.getElementById('status-icon').innerHTML = icon;
+  document.getElementById('status-text').innerHTML  = text;
+}
+
+// ══════════ HELPERS ══════════
+function fmtTime(d) {
+  let h=d.getHours(), m=d.getMinutes(), a='AM';
+  if(h>=12){ a='PM'; if(h>12) h-=12; }
+  if(h===0) h=12;
+  return h+':'+String(m).padStart(2,'0')+' '+a;
+}
+function splitHM(dec)  { const h=Math.floor(dec||0); return {h, m:Math.round(((dec||0)-h)*60)}; }
+function joinHM(h,m)   { return (parseInt(h)||0)+(parseInt(m)||0)/60; }
+function splitMins(t)  { const v=parseInt(t)||0; return {h:Math.floor(v/60), m:v%60}; }
+function joinMins(h,m) { return (parseInt(h)||0)*60+(parseInt(m)||0); }
+function escHtml(s)    { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s)    { return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// ══════════ INIT ══════════
+document.addEventListener('DOMContentLoaded', () => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('SW reg failed',e));
+  }
+  if (GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID')) {
+    document.getElementById('setup-warning').classList.add('visible');
+  }
+  window.addEventListener('load', () => {
+    if (window.google?.accounts?.oauth2) { initGoogleAuth(); }
+    else {
+      let gisWaits = 0;
+      const iv = setInterval(() => {
+        if (window.google?.accounts?.oauth2) { clearInterval(iv); initGoogleAuth(); return; }
+        gisWaits++;
+        if (gisWaits > 20) { // 6 seconds
+          clearInterval(iv);
+          console.warn('GIS library never loaded — likely blocked or no network.');
+        }
+      }, 300);
+    }
+  });
+
+  startClock();
+  // Pre-fill deploy-from time with current time so it's ready to adjust
+  const _n = new Date();
+  document.getElementById('deploy-time').value =
+    String(_n.getHours()).padStart(2,'0') + ':' + String(_n.getMinutes()).padStart(2,'0');
+
+  const s = getSettings();
+  loadSettingsUI();
+  updatePatientName(s.patientName);
+  startPreviewTimer();
+
+  // Restore a running schedule if the app was closed mid-day
+  const savedSched = localStorage.getItem(SCHEDULE_KEY);
+  if (savedSched) {
+    try {
+      const state = JSON.parse(savedSched);
+      if (state.running && state.events) {
+        const now      = new Date();
+        const restored = state.events
+          .map(ev => ({ ...ev, start:new Date(ev.start), end:new Date(ev.end) }))
+          .filter(ev => ev.end > now);
+        if (restored.length > 0) {
+          const counts = { feeds:0, flushes:0, meds:0 };
+          restored.forEach(ev => {
+            if      (ev.type==='feed')  counts.feeds++;
+            else if (ev.type==='flush') counts.flushes++;
+            else if (ev.type==='med')   counts.meds++;
+          });
+          activeEvents = restored;
+          renderTimeline(restored, counts);
+          startNextTaskTracker();
+          setScheduleRunning(true);
+          if (window.AndroidBridge) window.AndroidBridge.updateSchedule(savedSched);
+          setStatus('success','&#10003;','Schedule restored — running today\'s plan.');
+        } else {
+          localStorage.removeItem(SCHEDULE_KEY); // all events are past
+        }
+      }
+    } catch(e) { localStorage.removeItem(SCHEDULE_KEY); }
+  }
+
+  // Show APK version section and silently check for updates
+  if (window.AndroidBridge) {
+    document.getElementById('s-ver-head').style.display    = '';
+    document.getElementById('s-ver-section').style.display = '';
+    // Slight delay so the page is fully rendered first
+    setTimeout(() => checkForUpdates(false), 3000);
+  }
+
+  if (!s.setupComplete) { openWizard(); }
+
+  // Handle ?action=start shortcut (from widget or manifest shortcut)
+  if (new URLSearchParams(location.search).get('action') === 'start') {
+    setTimeout(launchDay, 800);
+  }
+});
+</script>
+</body>
+</html>

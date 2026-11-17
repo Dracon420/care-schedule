@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#07090F" rx="80"/>
+
+  <!-- Grid dots -->
+  <circle cx="128" cy="128" r="3" fill="#00E5FF" opacity="0.15"/>
+  <circle cx="256" cy="128" r="3" fill="#00E5FF" opacity="0.15"/>
+  <circle cx="384" cy="128" r="3" fill="#00E5FF" opacity="0.15"/>
+  <circle cx="128" cy="256" r="3" fill="#00E5FF" opacity="0.15"/>
+  <circle cx="384" cy="256" r="3" fill="#00E5FF" opacity="0.15"/>
+  <circle cx="128" cy="384" r="3" fill="#00E5FF" opacity="0.15"/>
+  <circle cx="256" cy="384" r="3" fill="#00E5FF" opacity="0.15"/>
+  <circle cx="384" cy="384" r="3" fill="#00E5FF" opacity="0.15"/>
+
+  <!-- Corner ticks -->
+  <path d="M40,40 L80,40 M40,40 L40,80" stroke="#00E5FF" stroke-width="6" fill="none" opacity="0.5" stroke-linecap="round"/>
+  <path d="M472,40 L432,40 M472,40 L472,80" stroke="#00E5FF" stroke-width="6" fill="none" opacity="0.5" stroke-linecap="round"/>
+  <path d="M40,472 L80,472 M40,472 L40,432" stroke="#00E5FF" stroke-width="6" fill="none" opacity="0.5" stroke-linecap="round"/>
+  <path d="M472,472 L432,472 M472,472 L472,432" stroke="#00E5FF" stroke-width="6" fill="none" opacity="0.5" stroke-linecap="round"/>
+
+  <!-- Glow filter -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Medical cross — glow layer -->
+  <rect x="218" y="138" width="76" height="236" rx="12" fill="#00E5FF" opacity="0.25" filter="url(#glow)"/>
+  <rect x="138" y="218" width="236" height="76" rx="12" fill="#00E5FF" opacity="0.25" filter="url(#glow)"/>
+
+  <!-- Medical cross — solid -->
+  <rect x="218" y="138" width="76" height="236" rx="12" fill="#00E5FF"/>
+  <rect x="138" y="218" width="236" height="76" rx="12" fill="#00E5FF"/>
+</svg>

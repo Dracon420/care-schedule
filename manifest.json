@@ -1,0 +1,48 @@
+{
+  "name": "Care Management System",
+  "short_name": "CareSystem",
+  "description": "Daily care schedule for medically complex patients — feedings, water flushes, and medications.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07090F",
+  "theme_color": "#00E5FF",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start Today's Schedule",
+      "short_name": "Start",
+      "description": "Launch today's care schedule immediately",
+      "url": "./index.html?action=start",
+      "icons": [
+        {
+          "src": "icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "screenshots": [],
+  "categories": ["medical", "health", "lifestyle"]
+}

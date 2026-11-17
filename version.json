@@ -1,0 +1,6 @@
+{
+  "latest": "1.6.2",
+  "versionCode": 7,
+  "releaseUrl": "https://github.com/Dracon420/care-schedule-android/releases/latest",
+  "notes": "Camera/notch fix, external links open in browser, update checker fixes"
+}
